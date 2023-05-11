@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1090694944593",
+    "project_id": "settdeycohomoeolab",
+    "storage_bucket": "settdeycohomoeolab.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1090694944593:android:b33fbbc74754ec6a0ba570",
+        "android_client_info": {
+          "package_name": "com.breezefsmsettdeycohomoeolab"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1090694944593-963a0g2sq7406eq4ovgm9alll0s99q66.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhJxooHMn7u4ObyCSHwCZ9XNUaJ37Kc6o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1090694944593-963a0g2sq7406eq4ovgm9alll0s99q66.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
