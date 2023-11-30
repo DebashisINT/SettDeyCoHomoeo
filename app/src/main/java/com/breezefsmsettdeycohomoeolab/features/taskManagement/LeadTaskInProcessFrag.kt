@@ -1,9 +1,12 @@
 package com.breezefsmsettdeycohomoeolab.features.taskManagement
 
 import android.app.Activity
+import android.app.Dialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.speech.RecognizerIntent
 import android.text.Editable
@@ -15,6 +18,7 @@ import android.widget.ImageView
 import android.widget.RadioButton
 import androidx.appcompat.widget.AppCompatRadioButton
 import androidx.cardview.widget.CardView
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.borax12.materialdaterangepicker.date.DatePickerDialog
 import com.breezefsmsettdeycohomoeolab.CustomStatic
@@ -29,29 +33,29 @@ import com.breezefsmsettdeycohomoeolab.app.utils.AppUtils
 import com.breezefsmsettdeycohomoeolab.app.utils.FTStorageUtils
 import com.breezefsmsettdeycohomoeolab.base.presentation.BaseActivity
 import com.breezefsmsettdeycohomoeolab.base.presentation.BaseFragment
+import com.breezefsmsettdeycohomoeolab.features.addshop.api.AddShopRepositoryProvider
 import com.breezefsmsettdeycohomoeolab.features.dashboard.presentation.DashboardActivity
-import com.breezefsmsettdeycohomoeolab.features.lead.adapter.CustomerLeadAdapter
 import com.breezefsmsettdeycohomoeolab.features.lead.api.GetLeadRegProvider
-import com.breezefsmsettdeycohomoeolab.features.lead.dialog.EnqListDialog
 import com.breezefsmsettdeycohomoeolab.features.lead.model.CustomerLeadList
-import com.breezefsmsettdeycohomoeolab.features.lead.model.CustomerLeadResponse
-import com.breezefsmsettdeycohomoeolab.features.lead.model.CustomerListReq
+import com.breezefsmsettdeycohomoeolab.features.lead.model.TaskList
+import com.breezefsmsettdeycohomoeolab.features.lead.model.TaskResponse
 import com.breezefsmsettdeycohomoeolab.features.taskManagement.TaskManagementFrag.Companion.reqData_inProcess_LeadFrag
 import com.breezefsmsettdeycohomoeolab.features.taskManagement.adapter.CustomerTaskManagementAdapter
+import com.breezefsmsettdeycohomoeolab.features.taskManagement.model.TaskListReq
 import com.breezefsmsettdeycohomoeolab.widgets.AppCustomEditText
 import com.breezefsmsettdeycohomoeolab.widgets.AppCustomTextView
 import com.pnikosis.materialishprogress.ProgressWheel
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import java.util.*
-import kotlin.collections.ArrayList
+
 // create by saheli 05-05-2023 mantis  0026023
 // 1.0 LeadTaskInProcessFrag mantis 0026024 saheli v 4.0.8  :under the 'Assigned Lead' page
 class LeadTaskInProcessFrag : BaseFragment(),  DatePickerDialog.OnDateSetListener,View.OnClickListener{
 
     private lateinit var mContext: Context
     private  var adapter: CustomerTaskManagementAdapter? = null
-    private var tempList:ArrayList<CustomerLeadList> = ArrayList()
+    private var tempList:ArrayList<TaskList> = ArrayList()
 
     private lateinit var rv_list: RecyclerView
     private lateinit var progress_wheel: ProgressWheel
@@ -62,13 +66,18 @@ class LeadTaskInProcessFrag : BaseFragment(),  DatePickerDialog.OnDateSetListene
     private var isChkChanged: Boolean = false
     private val mAutoHighlight: Boolean = false
     private lateinit var date_rangeDisplay: AppCustomTextView
-    private lateinit var enquiryTypeSelectSpinner: AppCustomTextView
+//    private lateinit var enquiryTypeSelectSpinner: AppCustomTextView
     private lateinit var showButton: ImageView
     private var fromDate:String = ""
     private var toDate:String = ""
     private lateinit var leadSearch: AppCustomEditText
 
-    var reqData = CustomerListReq()
+    var reqData = TaskListReq()
+
+    private lateinit var sel_priority: AppCustomTextView
+    private var adapterpriorityList: AdapterMultiPrioritySel? = null
+    var selectedPriorityL : ArrayList<TaskPriorityResponse> = ArrayList()
+    private var selPriorityId:String=""
 
 
     override fun onAttach(context: Context) {
@@ -150,15 +159,19 @@ class LeadTaskInProcessFrag : BaseFragment(),  DatePickerDialog.OnDateSetListene
         date_range=view.findViewById(R.id.frag_lead_pending_date_range)
         date_rangeCv = view.findViewById(R.id.cv_date_range)
         date_rangeDisplay = view.findViewById(R.id.frag_lead_pending_date_range_display)
-        enquiryTypeSelectSpinner = view.findViewById(R.id.frag_lead_pending_spinnerType)
+//        enquiryTypeSelectSpinner = view.findViewById(R.id.frag_lead_pending_spinnerType)
         radioList.add(date_range)
         showButton =  view.findViewById(R.id.frag_lead_pending_show)
         leadSearch = view.findViewById(R.id.et_frag_lead_pending_search)
 
         date_range.setOnClickListener(this)
         date_rangeCv.setOnClickListener(this)
-        enquiryTypeSelectSpinner.setOnClickListener(this)
+//        enquiryTypeSelectSpinner.setOnClickListener(this)
         showButton.setOnClickListener(this)
+
+
+        sel_priority = view.findViewById(R.id.frag_task_managment_spinnerType)
+        sel_priority.setOnClickListener(this)
     }
 
     override fun onResume() {
@@ -173,7 +186,7 @@ class LeadTaskInProcessFrag : BaseFragment(),  DatePickerDialog.OnDateSetListene
         if(reqData_inProcess_LeadFrag.user_id!=null){
             isChkChanged = true
             date_range.isChecked = true
-            enquiryTypeSelectSpinner.text=reqData_inProcess_LeadFrag.enquiry_from
+            sel_priority.text=reqData_inProcess_LeadFrag.task_priority_name
             var strt_date=reqData_inProcess_LeadFrag.from_date
             var end_date=reqData_inProcess_LeadFrag.to_date
             onDateSetCustom(strt_date!!.substring(0,4).toInt(),strt_date!!.substring(5,7).replace("0","").toInt()-1, strt_date!!.substring(8,10).replace("0","").toInt(),
@@ -218,18 +231,20 @@ class LeadTaskInProcessFrag : BaseFragment(),  DatePickerDialog.OnDateSetListene
                     isChkChanged = false
                 }
             }
-            R.id.frag_lead_pending_spinnerType->{
-                var List:ArrayList<String> = ArrayList()
-                List.add("IndiaMart")
+            R.id.frag_task_managment_spinnerType->{
+                sel_priority.text="All"
+                ApicallPriorityList()
+               /* var List:ArrayList<String> = ArrayList()
+                List.add("All")
                 List.add("IndiaMart (ARCHER)")
                 List.add("MccoyMart")
                 List.add("Website")
                 List.add("Direct Call")
                 List.add("Exhibition")
                 List.add("Twak")
-                EnqListDialog.newInstance(List,"Select Enquiry"){
-                    enquiryTypeSelectSpinner.text=it
-                }.show((mContext as DashboardActivity).supportFragmentManager, "")
+                EnqListDialog.newInstance(List,"Select Priority"){
+                    sel_priority.text=it
+                }.show((mContext as DashboardActivity).supportFragmentManager, "")*/
             }
 
             R.id.frag_lead_pending_show->{
@@ -242,6 +257,84 @@ class LeadTaskInProcessFrag : BaseFragment(),  DatePickerDialog.OnDateSetListene
                 getLeadFetch()
             }
         }
+    }
+    var extraPriorityL:ArrayList<TaskPriorityResponse> = ArrayList()
+    private fun ApicallPriorityList() {
+        try{
+            val repository = AddShopRepositoryProvider.provideAddShopWithoutImageRepository()
+            BaseActivity.compositeDisposable.add(
+                repository.fetchPriorityData(Pref.session_token!!)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe({ result ->
+                        var viewResult = result as PriorityTaskSel
+                        try{
+                            //add default data
+                            extraPriorityL.clear()
+                          /*  val taskPriorityResponse = TaskPriorityResponse()
+                            taskPriorityResponse.task_priority_id = ""
+                            taskPriorityResponse.task_priority_name = "All"
+                            extraPriorityL.add(taskPriorityResponse)*/
+                            extraPriorityL.addAll(viewResult.task_priority_list)
+                            println("list" + extraPriorityL)
+                        }
+                        catch (e:Exception) {
+                            e.printStackTrace()
+                        }
+                        if (viewResult!!.status == NetworkConstant.SUCCESS) {
+                            selectedPriorityL.clear()
+                            dialogOpenPriority()
+                        }
+                        }, { error ->
+                        progress_wheel.stopSpinning()
+                        (mContext as DashboardActivity).showSnackMessage(getString(R.string.something_went_wrong))
+                    }))
+                }
+        catch (ex:Exception){
+            ex.printStackTrace()
+
+        }
+    }
+    fun dialogOpenPriority() {
+        val simpleDialog = Dialog(mContext)
+        simpleDialog.setCancelable(true)
+        simpleDialog.getWindow()!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+        simpleDialog.setContentView(R.layout.dialog_priorty)
+        val dialogHeader = simpleDialog.findViewById(R.id.dialog_priorty_headerTV) as AppCustomTextView
+        val  rv_PriortyList = simpleDialog.findViewById(R.id.rv_priorty_list) as RecyclerView
+        rv_PriortyList.layoutManager = LinearLayoutManager(mContext)
+
+        adapterpriorityList = AdapterMultiPrioritySel(mContext,extraPriorityL,object : AdapterMultiPrioritySel.OnClickListener {
+            override fun onTickUntickView(obj: TaskPriorityResponse, isTick: Boolean) {
+                if(isTick){
+                    selectedPriorityL.add(obj)
+                } else{
+                    selectedPriorityL.remove(obj)
+                }
+                var prioritySel = ""
+                var prioritySelId = ""
+                if(selectedPriorityL.size>0){
+                    for(i in 0..selectedPriorityL.size-1){
+                        prioritySel = prioritySel+selectedPriorityL.get(i).task_priority_name+","
+                        prioritySelId = prioritySelId+selectedPriorityL.get(i).task_priority_id+","
+                    }
+                    sel_priority.text = prioritySel
+                    selPriorityId = prioritySelId
+                }else{
+                    sel_priority.text = ""
+                    selPriorityId = ""
+                }
+            }
+        })
+        rv_PriortyList.adapter = adapterpriorityList
+
+        dialogHeader.text = "Select Priority Type"
+
+        val dialogYes = simpleDialog.findViewById(R.id.dialog_priorty_ok) as AppCustomTextView
+        dialogYes.setOnClickListener({ view ->
+            simpleDialog.cancel()
+        })
+        simpleDialog.show()
     }
 
     override fun onDateSet(view: DatePickerDialog?, year: Int, monthOfYear: Int, dayOfMonth: Int, yearEnd: Int, monthOfYearEnd: Int, dayOfMonthEnd: Int) {
@@ -285,7 +378,8 @@ class LeadTaskInProcessFrag : BaseFragment(),  DatePickerDialog.OnDateSetListene
         reqData.to_date = toDate
         //Start REv 1.0 LeadTaskInProcess AppV 4.0.8 saheli mantis 0026024
 //        reqData.enquiry_from = "all"
-        reqData.enquiry_from = ""
+        reqData.task_priority_id = selPriorityId.dropLast(1)
+        reqData.task_priority_name =  sel_priority.text.toString().dropLast(1)
         // End 1.0 LeadTaskInProcessFrag  mantis 0026024 saheli v 4.0.8
         reqData.user_id = Pref.user_id
 
@@ -298,20 +392,20 @@ class LeadTaskInProcessFrag : BaseFragment(),  DatePickerDialog.OnDateSetListene
             progress_wheel.spin()
             val repository = GetLeadRegProvider.provideList()
             BaseActivity.compositeDisposable.add(
-                    repository.CustomerList(reqData)
+                    repository.TaskList(reqData)
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribeOn(Schedulers.io())
                             .subscribe({ result ->
-                                val addShopResult = result as CustomerLeadResponse
+                                val addShopResult = result as TaskResponse
                                 BaseActivity.isApiInitiated = false
                                 progress_wheel.stopSpinning()
                                 if (addShopResult.status == NetworkConstant.SUCCESS) {
-                                    if(addShopResult.customer_dtls_list.size>0){
+                                    if(addShopResult.task_dtls_list.size>0){
                                         rv_list.visibility=View.VISIBLE
                                         leadSearch.visibility=View.VISIBLE
                                         reqData_inProcess_LeadFrag=reqData
 
-                                        setAdapter(addShopResult.customer_dtls_list)
+                                        setAdapter(addShopResult.task_dtls_list)
                                     }
                                 } else if(addShopResult.status == NetworkConstant.NO_DATA) {
                                     (mContext as DashboardActivity).showSnackMessage(getString(R.string.no_data_found))
@@ -335,13 +429,17 @@ class LeadTaskInProcessFrag : BaseFragment(),  DatePickerDialog.OnDateSetListene
         }
     }
 
-    private fun setAdapter(list:ArrayList<CustomerLeadList>){
+    private fun setAdapter(list:ArrayList<TaskList>){
 
         tv_no_data.visibility=View.GONE
         tempList = ArrayList()
         for(i in 0..list.size-1){
-            if(!list.get(i).status.toUpperCase().equals("PENDING") && !list.get(i).status.toUpperCase().equals("NOT INTERESTED")){
-                tempList.add(list.get(i))
+            try{
+                if(!list.get(i).status.toUpperCase().equals("PENDING") && !list.get(i).status.toUpperCase().equals("NOT INTERESTED")){
+                    tempList.add(list.get(i))
+                }
+            }catch (ex:Exception){
+                ex.printStackTrace()
             }
         }
         if(tempList.size==0){
@@ -352,15 +450,10 @@ class LeadTaskInProcessFrag : BaseFragment(),  DatePickerDialog.OnDateSetListene
         }
 
         adapter = CustomerTaskManagementAdapter(mContext,tempList,object : CustomerTaskManagementAdapter.OnPendingLeadClickListener{
-            override fun onActivityClick(obj: CustomerLeadList) {
+            override fun onActivityClick(obj: TaskList) {
                 doActivity(obj)
             }
-            override fun onPhoneClick(obj: CustomerLeadList) {
-                if(obj.mobile_no.length>1)
-                {
-                    var phoneNo=obj.mobile_no
-                    IntentActionable.initiatePhoneCall(mContext, phoneNo)
-                }
+            override fun onPhoneClick(obj: TaskList) {
             }
         }, {
             it
@@ -369,7 +462,7 @@ class LeadTaskInProcessFrag : BaseFragment(),  DatePickerDialog.OnDateSetListene
 
     }
 
-    private fun doActivity(obj:CustomerLeadList){
+    private fun doActivity(obj:TaskList){
         CustomStatic.IsViewTaskFromInProcess=true
         (mContext as DashboardActivity).loadFragment(FragType.ViewTaskManagementFrag, true, obj)
     }

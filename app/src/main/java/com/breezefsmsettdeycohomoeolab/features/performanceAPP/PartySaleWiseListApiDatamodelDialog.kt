@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.breezefsmsettdeycohomoeolab.R
 import com.breezefsmsettdeycohomoeolab.features.nearbyshops.model.ShopData
-import com.breezefsmsettdeycohomoeolab.features.photoReg.adapter.AdapterUserTestList
+import com.breezefsmsettdeycohomoeolab.features.performanceAPP.model.AdapterUserTestList
 import com.breezefsmsettdeycohomoeolab.widgets.AppCustomEditText
 import com.breezefsmsettdeycohomoeolab.widgets.AppCustomTextView
 

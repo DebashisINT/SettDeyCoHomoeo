@@ -9,10 +9,11 @@ import com.breezefsmsettdeycohomoeolab.CustomStatic
 import com.breezefsmsettdeycohomoeolab.R
 import com.breezefsmsettdeycohomoeolab.features.lead.model.CustomerLeadList
 import com.breezefsmsettdeycohomoeolab.features.lead.model.activity_dtls_list
+import com.breezefsmsettdeycohomoeolab.features.taskManagement.Taskdtls_list
 import kotlinx.android.synthetic.main.row_view_activity_lead.view.*
 
 // create by saheli 05-05-2023 mantis 0026023
-class ViewTaskActivityAdapter(var mContext:Context, var list:ArrayList<activity_dtls_list>, private val listener: OnViewActiClickListener):
+class ViewTaskActivityAdapter(var mContext:Context, var list:ArrayList<Taskdtls_list>, private val listener: OnViewActiClickListener):
     RecyclerView.Adapter<ViewTaskActivityAdapter.ViewActivityViewHolder>(){
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewActivityViewHolder {
@@ -25,11 +26,10 @@ class ViewTaskActivityAdapter(var mContext:Context, var list:ArrayList<activity_
     }
 
     override fun onBindViewHolder(holder: ViewActivityViewHolder, position: Int) {
-        holder.tv_date.text=list.get(position).activity_date
-        holder.tv_time.text=list.get(position).activity_time
-        holder.tv_status.text=list.get(position).activity_status
-        holder.tv_type.text=list.get(position).activity_type_name
-        holder.tv_dtls.text=list.get(position).activity_details
+        holder.tv_date.text=list.get(position).task_date
+        holder.tv_time.text=list.get(position).task_time
+        holder.tv_status.text=list.get(position).task_status
+        holder.tv_dtls.text=list.get(position).task_details
         holder.tv_remark.text=list.get(position).other_remarks
 
         if(CustomStatic.IsViewTaskFromInProcess){
@@ -55,7 +55,7 @@ class ViewTaskActivityAdapter(var mContext:Context, var list:ArrayList<activity_
     }
 
     interface OnViewActiClickListener {
-        fun onEditClick(obj: activity_dtls_list,adapterPos:Int)
+        fun onEditClick(obj: Taskdtls_list,adapterPos:Int)
     }
 
 

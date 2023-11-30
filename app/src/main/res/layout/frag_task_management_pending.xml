@@ -32,7 +32,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/_3sdp"
-                    android:layout_weight="0.2"
+                    android:layout_weight="1"
                     app:cardBackgroundColor="#E6E5E5"
                     app:cardCornerRadius="@dimen/_5sdp"
                     android:layout_gravity="center"
@@ -65,7 +65,7 @@
                     app:cardElevation="@dimen/_5sdp">
 
                     <com.breezefsmsettdeycohomoeolab.widgets.AppCustomTextView
-                        android:id="@+id/frag_lead_pending_spinnerType"
+                        android:id="@+id/frag_task_managment_spinnerType"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center|start"
@@ -73,8 +73,7 @@
                         android:drawablePadding="@dimen/_20sdp"
                         android:gravity="center|start"
                         android:padding="@dimen/_5sdp"
-                        android:visibility="gone"
-                        android:text="Select Enquiry"
+                        android:text="Select Priority"
                         android:textSize="@dimen/_11sdp" />
 
                 </androidx.cardview.widget.CardView>
@@ -93,11 +92,12 @@
                     android:background="@drawable/ic_arrow1"
                     android:backgroundTint="@color/colorAccent"
                     android:padding="@dimen/_5sdp"
-                    android:layout_marginEnd="@dimen/_45sdp"
                     android:rotation="180" />
 
 
             </LinearLayout>
+
+
 
             <com.breezefsmsettdeycohomoeolab.widgets.AppCustomTextView
                 android:id="@+id/frag_lead_pending_date_range_display"

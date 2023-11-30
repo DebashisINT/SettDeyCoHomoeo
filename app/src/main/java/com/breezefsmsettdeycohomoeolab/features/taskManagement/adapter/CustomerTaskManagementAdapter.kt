@@ -11,6 +11,7 @@ import com.amulyakhare.textdrawable.TextDrawable
 import com.amulyakhare.textdrawable.util.ColorGenerator
 import com.breezefsmsettdeycohomoeolab.R
 import com.breezefsmsettdeycohomoeolab.features.lead.model.CustomerLeadList
+import com.breezefsmsettdeycohomoeolab.features.lead.model.TaskList
 import kotlinx.android.synthetic.main.row_customer_lead_list.view.row_cutomer_lead_list_ShopNameTV
 import kotlinx.android.synthetic.main.row_customer_lead_list.view.row_cutomer_lead_list_Shopaddress_TV
 import kotlinx.android.synthetic.main.row_customer_lead_list.view.row_cutomer_lead_list_Shopcontact_no
@@ -29,11 +30,11 @@ import kotlinx.android.synthetic.main.row_customer_lead_list.view.row_cutomer_le
 import kotlinx.android.synthetic.main.row_customer_task_list.view.row_cutomer_lead_list_tv_update
 
 // create by saheli 05-05-2023 mantis 0026023
-class CustomerTaskManagementAdapter(var mContext:Context, var list:ArrayList<CustomerLeadList>, private val listener: OnPendingLeadClickListener, private val getSize: (Int) -> Unit) :
+class CustomerTaskManagementAdapter(var mContext:Context, var list:ArrayList<TaskList>, private val listener: OnPendingLeadClickListener, private val getSize: (Int) -> Unit) :
    RecyclerView.Adapter<CustomerTaskManagementAdapter.CustomerLeadViewHolder>(), Filterable {
-    private var mList: ArrayList<CustomerLeadList>? = null
-    private var tempList: ArrayList<CustomerLeadList>? = null
-    private var filterList: ArrayList<CustomerLeadList>? = null
+    private var mList: ArrayList<TaskList>? = null
+    private var tempList: ArrayList<TaskList>? = null
+    private var filterList: ArrayList<TaskList>? = null
 
     init {
         mList = ArrayList()
@@ -56,22 +57,15 @@ class CustomerTaskManagementAdapter(var mContext:Context, var list:ArrayList<Cus
 
     override fun onBindViewHolder(holder: CustomerLeadViewHolder, position: Int) {
 
-        val drawable = TextDrawable.builder().buildRoundRect(mList!!.get(position).customer_name.trim().toUpperCase().take(1), ColorGenerator.MATERIAL.randomColor, 120)
+        val drawable = TextDrawable.builder().buildRoundRect(mList!!.get(position).task_name.trim().toUpperCase().take(1), ColorGenerator.MATERIAL.randomColor, 120)
 
         holder.imageShop.setImageDrawable(drawable)
-        holder.shopName.text="Task Name -"+mList!!.get(position).customer_name
-        holder.shopAdd.text=mList!!.get(position).customer_addr
-        holder.shopPhone.text=mList!!.get(position).mobile_no
-        holder.shopSource.text=mList!!.get(position).source_vend_type
-        holder.shopTime.text=mList!!.get(position).time
-        holder.shopDate.text=mList!!.get(position).date
-        holder.email.text=mList!!.get(position).email
+        holder.shopName.text="Task Name -"+mList!!.get(position).task_name
+        holder.shopSource.text=mList!!.get(position).priority_type_name
+        holder.shopTime.text=mList!!.get(position).due_time
+        holder.shopDate.text=mList!!.get(position).due_date
 
-        holder.productReq.text=mList!!.get(position).product_req
-        holder.qty.text=mList!!.get(position).qty
-        holder.uom.text=mList!!.get(position).UOM
-        holder.order_values.text=mList!!.get(position).order_value
-        holder.enquiry_dtls.text=mList!!.get(position).enquiry_details
+        holder.enquiry_dtls.text=mList!!.get(position).task_details
         if(mList!!.get(position).status.toUpperCase().equals("PENDING")){
             holder.status.text="Pending"
         }else{
@@ -80,7 +74,6 @@ class CustomerTaskManagementAdapter(var mContext:Context, var list:ArrayList<Cus
 
         holder.iv_activityTv.setOnClickListener {listener.onActivityClick(mList!!.get(holder.adapterPosition))  }
 
-        holder.shopPhone.setOnClickListener {listener.onPhoneClick(mList!!.get(holder.adapterPosition))  }
 
     }
 
@@ -119,14 +112,9 @@ class CustomerTaskManagementAdapter(var mContext:Context, var list:ArrayList<Cus
             filterList?.clear()
 
             tempList?.indices!!
-                    .filter { tempList?.get(it)?.customer_name?.toLowerCase()?.contains(p0?.toString()?.toLowerCase()!!)!!
-                            || tempList?.get(it)?.email?.toLowerCase()?.contains(p0?.toString()?.toLowerCase()!!)!! ||
-                            tempList?.get(it)?.enquiry_details?.toLowerCase()?.contains(p0?.toString()?.toLowerCase()!!)!! ||
-                            tempList?.get(it)?.mobile_no?.toLowerCase()?.contains(p0?.toString()?.toLowerCase()!!)!! ||
-                            tempList?.get(it)?.enquiry_details?.toLowerCase()?.contains(p0?.toString()?.toLowerCase()!!)!! ||
-                            tempList?.get(it)?.product_req?.toLowerCase()?.contains(p0?.toString()?.toLowerCase()!!)!! ||
-                            tempList?.get(it)?.status?.toLowerCase()?.contains(p0?.toString()?.toLowerCase()!!)!! ||
-                            tempList?.get(it)?.customer_addr?.toLowerCase()?.contains(p0?.toString()?.toLowerCase()!!)!!}
+                    .filter { tempList?.get(it)?.task_name?.toLowerCase()?.contains(p0?.toString()?.toLowerCase()!!)!! ||
+                            tempList?.get(it)?.task_details?.toLowerCase()?.contains(p0?.toString()?.toLowerCase()!!)!! ||
+                            tempList?.get(it)?.status?.toLowerCase()?.contains(p0?.toString()?.toLowerCase()!!)!! }
 
                     .forEach { filterList?.add(tempList?.get(it)!!) }
 
@@ -139,13 +127,13 @@ class CustomerTaskManagementAdapter(var mContext:Context, var list:ArrayList<Cus
         override fun publishResults(p0: CharSequence?, results: FilterResults?) {
 
             try {
-                filterList = results?.values as ArrayList<CustomerLeadList>?
+                filterList = results?.values as ArrayList<TaskList>?
                 mList?.clear()
                 val hashSet = HashSet<String>()
                 if (filterList != null) {
 
                     filterList?.indices!!
-                            .filter { hashSet.add(filterList?.get(it)?.customer_name!!) }
+                            .filter { hashSet.add(filterList?.get(it)?.task_name!!) }
                             .forEach { mList?.add(filterList?.get(it)!!) }
 
                     getSize(mList?.size!!)
@@ -158,7 +146,7 @@ class CustomerTaskManagementAdapter(var mContext:Context, var list:ArrayList<Cus
         }
     }
 
-    fun refreshList(list: ArrayList<CustomerLeadList>) {
+    fun refreshList(list: ArrayList<TaskList>) {
         mList?.clear()
         mList?.addAll(list)
 
@@ -174,8 +162,8 @@ class CustomerTaskManagementAdapter(var mContext:Context, var list:ArrayList<Cus
 
 
     interface OnPendingLeadClickListener {
-        fun onActivityClick(obj:CustomerLeadList)
-        fun onPhoneClick(obj:CustomerLeadList)
+        fun onActivityClick(obj:TaskList)
+        fun onPhoneClick(obj:TaskList)
     }
 
 

@@ -12,6 +12,7 @@ import com.breezefsmsettdeycohomoeolab.base.presentation.BaseFragment
 import com.breezefsmsettdeycohomoeolab.features.NewQuotation.ViewAllQuotListFragment
 import com.breezefsmsettdeycohomoeolab.features.lead.model.CustomerLeadList
 import com.breezefsmsettdeycohomoeolab.features.lead.model.CustomerListReq
+import com.breezefsmsettdeycohomoeolab.features.taskManagement.model.TaskListReq
 import com.breezefsmsettdeycohomoeolab.widgets.AppCustomTextView
 import com.google.android.gms.common.api.internal.LifecycleCallback.getFragment
 import com.pnikosis.materialishprogress.ProgressWheel
@@ -33,8 +34,8 @@ class TaskManagementFrag: BaseFragment(), View.OnClickListener {
     }
 
     companion object {
-        var reqData_inProcess_LeadFrag = CustomerListReq()
-        var reqData_pending_LeadFrag = CustomerListReq()
+        var reqData_inProcess_LeadFrag = TaskListReq()
+        var reqData_pending_LeadFrag = TaskListReq()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -42,8 +43,8 @@ class TaskManagementFrag: BaseFragment(), View.OnClickListener {
         val view = inflater.inflate(R.layout.frag_task_managment, container, false)
         initView(view)
         initAdapter()
-         reqData_inProcess_LeadFrag = CustomerListReq()
-         reqData_pending_LeadFrag = CustomerListReq()
+         reqData_inProcess_LeadFrag = TaskListReq()
+         reqData_pending_LeadFrag = TaskListReq()
         return view
     }
 

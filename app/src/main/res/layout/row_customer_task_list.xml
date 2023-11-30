@@ -56,7 +56,8 @@
                     android:layout_marginBottom="@dimen/_3sdp"
                     android:text="@string/address_txt"
                     android:textColor="@color/light_gray"
-                    android:textSize="@dimen/_11sdp" />
+                    android:textSize="@dimen/_11sdp"
+                    android:visibility="gone"/>
 
 
                 <com.breezefsmsettdeycohomoeolab.widgets.AppCustomTextView

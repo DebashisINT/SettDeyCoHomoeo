@@ -758,6 +758,9 @@ class ReimbursementFragment : BaseFragment(), DateAdapter.onPetSelectedListener,
             R.id.reimbursement_type_RL -> {
 
                 var test = visitTypeId
+                //Begin 100.0  AppV 4.1.3 Sumaan 10/05/2023 Reimbursement bug fixing & updation mantis id -- 26075
+                travelId = ""
+                //End of 100.0  AppV 4.1.3 Sumaan 10/05/2023 Reimbursement bug fixing & updation mantis id -- 26075
 
                 if (conveyancePopupWindow != null && conveyancePopupWindow!!.isShowing)
                     conveyancePopupWindow?.dismiss()
@@ -1150,6 +1153,20 @@ class ReimbursementFragment : BaseFragment(), DateAdapter.onPetSelectedListener,
     }
 
     private fun initPermissionCheck(state: Int) {
+
+        //begin mantis id 26741 Storage permission updation Suman 22-08-2023
+        var permissionList = arrayOf<String>( Manifest.permission.CAMERA)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            permissionList += Manifest.permission.READ_MEDIA_IMAGES
+            permissionList += Manifest.permission.READ_MEDIA_AUDIO
+            permissionList += Manifest.permission.READ_MEDIA_VIDEO
+        }else{
+            permissionList += Manifest.permission.WRITE_EXTERNAL_STORAGE
+            permissionList += Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+//end mantis id 26741 Storage permission updation Suman 22-08-2023
+
         permissionUtils = PermissionUtils(mContext as Activity, object : PermissionUtils.OnPermissionListener {
             override fun onPermissionGranted() {
                 imageState = state
@@ -1160,8 +1177,8 @@ class ReimbursementFragment : BaseFragment(), DateAdapter.onPetSelectedListener,
             override fun onPermissionNotGranted() {
                 (mContext as DashboardActivity).showSnackMessage(getString(R.string.accept_permission))
             }
-
-        }, arrayOf<String>(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+// mantis id 26741 Storage permission updation Suman 22-08-2023
+        },permissionList) //arrayOf<String>(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
     }
 
     fun onRequestPermission(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -1577,6 +1594,12 @@ class ReimbursementFragment : BaseFragment(), DateAdapter.onPetSelectedListener,
                         var test1 = visitTypeId
                         if (genericObj.expanse_id != "1")
                             fetchConfigDetails("")
+
+                        if(!genericObj.expanse_type.equals("Conveyance")){
+                            ll_frag_reimb_img_name_root.visibility = View.GONE
+                        }else{
+                            ll_frag_reimb_img_name_root.visibility = View.VISIBLE
+                        }
                     }
                     is ReimbursementConfigFuelTypeModel -> {
                         textView.text = genericObj.fuel_type
@@ -1792,12 +1815,12 @@ class ReimbursementFragment : BaseFragment(), DateAdapter.onPetSelectedListener,
     private fun checkValidation() {
 
         if(Pref.IsTAAttachment1Mandatory && imagePath_1.equals("") && expense_type_TV.text.equals("Conveyance")){
-            openDialogPopup("Please select upload ${Pref.NameforConveyanceAttachment1}")
+            openDialogPopup("Please upload ${Pref.NameforConveyanceAttachment1} document.")
             //Toaster.msgShort(mContext,"Please select upload ${Pref.NameforConveyanceAttachment1}")
             return
         }
         if(Pref.IsTAAttachment2Mandatory && imagePath_2.equals("") && expense_type_TV.text.equals("Conveyance")){
-            openDialogPopup("Please select upload ${Pref.NameforConveyanceAttachment2}")
+            openDialogPopup("Please upload ${Pref.NameforConveyanceAttachment2} document.")
             //Toaster.msgShort(mContext,"Please select upload ${Pref.NameforConveyanceAttachment2}")
             return
         }
@@ -2185,6 +2208,10 @@ class ReimbursementFragment : BaseFragment(), DateAdapter.onPetSelectedListener,
 
         radioGroup_food.clearCheck()
 
+        //Begin 100.0  AppV 4.1.3 Sumaan 10/05/2023 Reimbursement bug fixing & updation mantis id -- 26075
+        travelId = ""
+        //End of 100.0  AppV 4.1.3 Sumaan 10/05/2023 Reimbursement bug fixing & updation mantis id -- 26075
+
         //defaultSelectionOfTravelledMode()
 
         if (!isEditable)
@@ -2212,7 +2239,7 @@ class ReimbursementFragment : BaseFragment(), DateAdapter.onPetSelectedListener,
     private fun showDeleteAlert(adapterPosition: Int) {
         //Begin Rev 2.0 ReimbursementFragment AppV 4.0.8 Suman    02/05/2023 mantis id 25979
         //CommonDialog.getInstance("Delete Alert", "Do you really want to delete this TA?", getString(R.string.cancel), getString(R.string.ok), object : CommonDialogClickListener {
-        CommonDialog.getInstance("Delete Alert", "Do you really want to delete this Document?", getString(R.string.cancel), getString(R.string.ok), object : CommonDialogClickListener {
+        CommonDialog.getInstance("Delete Alert", "Do you really want to delete this document?", getString(R.string.cancel), getString(R.string.ok), object : CommonDialogClickListener {
             //End of Rev 2.0 ReimbursementFragment AppV 4.0.8 Suman    02/05/2023 mantis id 25979
             override fun onLeftClick() {
             }
@@ -2286,11 +2313,11 @@ class ReimbursementFragment : BaseFragment(), DateAdapter.onPetSelectedListener,
                             }
 
                         }else{
-                            openDialogPopup("Attendance not marked for ${AppUtils.getFormatedDateNew(date,"yy-mm-dd","dd-mm-yyyy")!!.replace("-","/")}")
+                            openDialogPopup("Attendance was not marked for the day ${AppUtils.getFormatedDateNew(date,"yy-mm-dd","dd-mm-yyyy")!!}.")
                             //Toaster.msgShort(mContext,"Attendance not marked for ${AppUtils.getFormatedDateNew(date,"yy-mm-dd","dd-mm-yyyy")!!.replace("-","/")}")
                         }
                     }else{
-                        openDialogPopup("Attendance not marked for ${AppUtils.getFormatedDateNew(date,"yy-mm-dd","dd-mm-yyyy")!!.replace("-","/")}")
+                        openDialogPopup("Attendance was not marked for the day ${AppUtils.getFormatedDateNew(date,"yy-mm-dd","dd-mm-yyyy")!!}.")
                         //Toaster.msgShort(mContext,"Attendance not marked for ${AppUtils.getFormatedDateNew(date,"yy-mm-dd","dd-mm-yyyy")!!.replace("-","/")}")
                     }
 
@@ -2319,10 +2346,10 @@ class ReimbursementFragment : BaseFragment(), DateAdapter.onPetSelectedListener,
                     if (reimbursementResponse.status == NetworkConstant.SUCCESS) {
                         try{
                             progress_wheel.spin()
-                            var expenseDA   = reimbursementResponse.expense_list!!.filter { it.expense_type.equals("Dearness Allowance") }.firstOrNull()
+                            var expenseDA   = reimbursementResponse.expense_list!!.filter { it.expense_type.equals("Dearness Allowance",ignoreCase = true) }.firstOrNull()
                             var expenseDADtls: ReimbursementListDetailsModel? = expenseDA!!.expense_list_details?.filter { it.applied_date.equals(date.toString()) }?.firstOrNull()
                             if(expenseDADtls == null){
-                                var notexpenseDA = reimbursementResponse.expense_list!!.filter { !it.expense_type.equals("Dearness Allowance") }
+                                var notexpenseDA = reimbursementResponse.expense_list!!.filter { !it.expense_type.equals("Dearness Allowance",ignoreCase = true) }
                                 var notexpenseDADtls = notexpenseDA.filter { it.expense_list_details!!.size>0 }
                                 var notexpenseDADtlsDate :ArrayList<ReimbursementListDetailsModel> = ArrayList()
                                 if(notexpenseDADtls.size>0){
@@ -2336,8 +2363,8 @@ class ReimbursementFragment : BaseFragment(), DateAdapter.onPetSelectedListener,
                                 }
 
                                 progress_wheel.stopSpinning()
-                                var tt=expense_type_TV.text
-                                if(notexpenseDADtlsDate.size>0 && expense_type_TV.text.equals("Dearness Allowance")){
+                                var exp=expense_type_TV.text
+                                if(notexpenseDADtlsDate.size>0 && expense_type_TV.text.toString().equals("Dearness Allowance",ignoreCase = true)){
                                     openDialogPopup("Other Allowance was applied for the day. You are not eligible to apply Dearness Allowance.")
                                     //Toaster.msgShort(mContext,"Other Allowance was applied for the day. You are not eligible to apply Dearness Allowance.")
                                 }else{
@@ -2346,7 +2373,7 @@ class ReimbursementFragment : BaseFragment(), DateAdapter.onPetSelectedListener,
                                 }
                             }else{
                                 progress_wheel.stopSpinning()
-                                openDialogPopup("Dearness Allowance was applied for the day. You are not eligible to apply Other Allowances.")
+                                openDialogPopup("Dearness Allowance was applied for the day.")
                                 //Toaster.msgShort(mContext,"Dearness Allowance was applied for the day. You are not eligible to apply Other Allowances.")
                             }
                         }catch (ex:Exception){
@@ -2371,10 +2398,12 @@ class ReimbursementFragment : BaseFragment(), DateAdapter.onPetSelectedListener,
         val simpleDialog = Dialog(mContext)
         simpleDialog.setCancelable(false)
         simpleDialog.getWindow()!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-        simpleDialog.setContentView(R.layout.dialog_ok)
-        val dialogHeader = simpleDialog.findViewById(R.id.dialog_yes_header_TV) as AppCustomTextView
-        dialogHeader.text = text
-        val dialogYes = simpleDialog.findViewById(R.id.tv_dialog_yes) as AppCustomTextView
+        simpleDialog.setContentView(R.layout.dialog_msg_with_logo)
+        val dialogHeader = simpleDialog.findViewById(R.id.dialog_message_headerTV) as AppCustomTextView
+        val dialogBody = simpleDialog.findViewById(R.id.dialog_message_header_TV) as AppCustomTextView
+        dialogHeader.text = AppUtils.hiFirstNameText()
+        dialogBody.text = text
+        val dialogYes = simpleDialog.findViewById(R.id.tv_message_ok) as AppCustomTextView
         dialogYes.setOnClickListener({ view ->
             simpleDialog.cancel()
         })

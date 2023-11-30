@@ -62,7 +62,8 @@
                         android:layout_marginBottom="@dimen/_3sdp"
                         android:text="@string/address_txt"
                         android:textColor="@color/light_gray"
-                        android:textSize="@dimen/_9sdp" />
+                        android:textSize="@dimen/_9sdp"
+                        android:visibility="gone"/>
 
 
                     <!--mantis 0026025 Task Management' page modification-->
@@ -94,7 +95,7 @@
                 android:id="@+id/rv_view_lead_frag_stls"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
         </LinearLayout>
 

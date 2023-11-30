@@ -72,6 +72,7 @@ import kotlin.collections.ArrayList
 // Revision History
 // 1.0 ReimbursementNFrag AppV 4.0.7 Saheli    02/03/2023 Timber Log Implementation
 // 2.0 ReimbursementNFrag AppV 4.0.8 Suman    03/05/2023 Timber CUstomization mantis id 25995
+// 3.0 ReimbursementNFrag AppV 4.1.3 Suman    09/05/2023 Reimburstment submit btn visibility updation mantis id 26069
 class ReimbursementNFrag : BaseFragment(), DateAdapter.onPetSelectedListener, View.OnClickListener, TabLayout.OnTabSelectedListener, RadioGroup.OnCheckedChangeListener {
 
     private val expenseTypesArrayList: ArrayList<ReimbursementConfigExpenseTypeModel> = ArrayList()
@@ -1192,6 +1193,20 @@ class ReimbursementNFrag : BaseFragment(), DateAdapter.onPetSelectedListener, Vi
     }
 
     private fun initPermissionCheck(state: Int) {
+
+        //begin mantis id 26741 Storage permission updation Suman 22-08-2023
+        var permissionList = arrayOf<String>( Manifest.permission.CAMERA)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU){
+            permissionList += Manifest.permission.READ_MEDIA_IMAGES
+            permissionList += Manifest.permission.READ_MEDIA_AUDIO
+            permissionList += Manifest.permission.READ_MEDIA_VIDEO
+        }else{
+            permissionList += Manifest.permission.WRITE_EXTERNAL_STORAGE
+            permissionList += Manifest.permission.READ_EXTERNAL_STORAGE
+        }
+//end mantis id 26741 Storage permission updation Suman 22-08-2023
+
         permissionUtils = PermissionUtils(mContext as Activity, object : PermissionUtils.OnPermissionListener {
             override fun onPermissionGranted() {
                 imageState = state
@@ -1203,7 +1218,7 @@ class ReimbursementNFrag : BaseFragment(), DateAdapter.onPetSelectedListener, Vi
                 (mContext as DashboardActivity).showSnackMessage(getString(R.string.accept_permission))
             }
 
-        }, arrayOf<String>(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
+        }, permissionList)//arrayOf<String>(Manifest.permission.CAMERA, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE))
     }
 
     fun onRequestPermission(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -1241,6 +1256,9 @@ class ReimbursementNFrag : BaseFragment(), DateAdapter.onPetSelectedListener, Vi
 
         date = AppUtils.getFormattedDateForApi(selectedDate!!)
 
+        Handler().postDelayed(Runnable {
+            checkStationStatusFromRevisit(date)
+        }, 100)
 
         if (!isEditable) {
             tv_from_loc.text = ""
@@ -1666,15 +1684,26 @@ class ReimbursementNFrag : BaseFragment(), DateAdapter.onPetSelectedListener, Vi
                         }else{
                             submit_button_TV.visibility=View.GONE
                         }
-                        if(genericObj.expanse_type.equals("Allowance")){
+                        /*if(genericObj.expanse_type.equals("Allowance")){
                             submit_button_TV.visibility=View.GONE
                         }
                         if(visitTypeId.equals("1")){
                             submit_button_TV.visibility=View.GONE
-                        }
-
-                        submit_button_TV.visibility=View.VISIBLE
+                        }*/
                         //End of 2.0 ReimbursementNFrag AppV 4.0.8 Suman    03/05/2023 Timber CUstomization mantis id 25995
+
+
+                        //Begin 3.0 ReimbursementNFrag AppV 4.1.3 Suman    09/05/2023 Reimburstment submit btn visibility updation mantis id 26069
+                        if(visitTypeId.equals("2") && isExstationForRevisit){
+                            submit_button_TV.visibility=View.VISIBLE
+                        }else if(visitTypeId.equals("3") && isOutstationForRevisit){
+                            submit_button_TV.visibility=View.VISIBLE
+                        }else if (visitTypeId.equals("1") && isInstationForRevisit){
+                            submit_button_TV.visibility=View.VISIBLE
+                        }else{
+                            submit_button_TV.visibility=View.GONE
+                        }
+                        //End of 3.0 ReimbursementNFrag AppV 4.1.3 Suman    09/05/2023 Reimburstment submit btn visibility updation mantis id 26069
                     }
                     is ReimbursementConfigFuelTypeModel -> {
                         textView.text = genericObj.fuel_type
@@ -2360,6 +2389,7 @@ class ReimbursementNFrag : BaseFragment(), DateAdapter.onPetSelectedListener, Vi
 
     //Begin 2.0 ReimbursementNFrag AppV 4.0.8 Suman    03/05/2023 Timber CUstomization mantis id 25995
     private fun checkStationStatusFromRevisit(checkDate:String){
+    try {
         var shopActivityList = AppDatabase.getDBInstance()!!.shopActivityDao().getTotalShopVisitedForADay(checkDate) as ArrayList<ShopActivityEntity>
         if(shopActivityList.size>0){
             var stationCodeList = shopActivityList.map { it.stationCode!!.toInt() }
@@ -2382,7 +2412,14 @@ class ReimbursementNFrag : BaseFragment(), DateAdapter.onPetSelectedListener, Vi
                 isExstationForRevisit = false
                 isOutstationForRevisit = false
             }
+        }else{
+            isInstationForRevisit = false
+            isExstationForRevisit = false
+            isOutstationForRevisit = false
         }
+    }catch (ex:Exception){
+        Timber.d("Error ${ex.message}")
+    }
     }
     //End of 2.0 ReimbursementNFrag AppV 4.0.8 Suman    03/05/2023 Timber CUstomization mantis id 25995
 

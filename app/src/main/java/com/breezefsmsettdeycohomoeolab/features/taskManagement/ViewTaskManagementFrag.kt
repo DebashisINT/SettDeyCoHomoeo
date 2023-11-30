@@ -1,5 +1,6 @@
 package com.breezefsmsettdeycohomoeolab.features.taskManagement
 
+import android.annotation.SuppressLint
 import android.app.Dialog
 import android.app.TimePickerDialog
 import android.content.Context
@@ -44,6 +45,7 @@ import com.breezefsmsettdeycohomoeolab.features.photoReg.model.UserListResponseM
 import com.breezefsmsettdeycohomoeolab.features.report.model.TargetVsAchvDataModel
 import com.breezefsmsettdeycohomoeolab.features.report.presentation.TargetVsAchvDetailsFragment
 import com.breezefsmsettdeycohomoeolab.features.taskManagement.adapter.ViewTaskActivityAdapter
+import com.breezefsmsettdeycohomoeolab.features.taskManagement.model.TaskManagmentEntity
 import com.breezefsmsettdeycohomoeolab.widgets.AppCustomTextView
 import com.downloader.Progress
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -57,6 +59,8 @@ import kotlinx.android.synthetic.main.fragment_add_pjp.*
 import org.jetbrains.anko.doAsync
 import org.jetbrains.anko.uiThread
 import java.text.SimpleDateFormat
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -67,20 +71,16 @@ import kotlin.collections.ArrayList
 class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
 
     private lateinit var mContext: Context
-
     private lateinit var rv_list:RecyclerView
     private lateinit var progress_wheel:ProgressWheel
     private lateinit var tv_no_data:AppCustomTextView
     private lateinit var shopName:AppCustomTextView
     private lateinit var shopImage:ImageView
-    private lateinit var shopAddre:AppCustomTextView
-    private lateinit var shopContact:AppCustomTextView
     private lateinit var fab_view_frag:FloatingActionButton
-
     private var viewActivityAdapter: ViewTaskActivityAdapter? = null
 
-    var addActivityReq = AddActivityReq()
-    var editActivityReq = EditActivityReq()
+    var addActivityReq = AddTaskReq()
+    var editActivityReq = EditTaskReq()
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -88,21 +88,14 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
     }
 
     companion object {
-
-
-        var crm_id:String?=null
+        var task_id:String?=null
         var shopNames:String?=null
-        var shopAddresss:String?=null
-        var shopPhone:String?=null
 
         fun getInstance(objects: Any): ViewTaskManagementFrag {
             val fragment = ViewTaskManagementFrag()
-            var obj = objects as CustomerLeadList
-
-            crm_id=obj.crm_id
-            shopNames = obj.customer_name
-            shopAddresss = obj.customer_addr
-            shopPhone = obj.mobile_no
+            var obj = objects as TaskList
+            task_id=obj.task_id
+            shopNames = obj.task_name
 
             return fragment
         }
@@ -124,8 +117,6 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
         progress_wheel=view.findViewById(R.id.progress_wheel)
         shopName = view.findViewById(R.id.row_cutomer_lead_list_ShopNameTV)
         shopImage = view.findViewById(R.id.row_cutomer_lead_list_ivImage)
-        shopAddre = view.findViewById(R.id.row_cutomer_lead_list_Shopaddress_TV)
-        shopContact = view.findViewById(R.id.row_cutomer_lead_list_Shopcontact_no)
 
         progress_wheel.stopSpinning()
 
@@ -136,8 +127,7 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
         val drawable = TextDrawable.builder()
                 .buildRoundRect(shopNames!!.trim().toUpperCase().take(1), ColorGenerator.MATERIAL.randomColor, 120)
         shopImage.setImageDrawable(drawable)
-        shopAddre.text = shopAddresss
-        shopContact.text = shopPhone
+
         getActivityList()
     }
 
@@ -151,17 +141,17 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
             progress_wheel.spin()
             val repository = GetLeadRegProvider.provideList()
             BaseActivity.compositeDisposable.add(
-                    repository.getActivityList(crm_id!!)
+                    repository.getTaskList(task_id!!)
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribeOn(Schedulers.io())
                             .subscribe({ result ->
-                                val addShopResult = result as ActivityViewRes
+                                val addShopResult = result as TaskViewRes
                                 BaseActivity.isApiInitiated = false
                                 progress_wheel.stopSpinning()
                                 if (addShopResult.status == NetworkConstant.SUCCESS) {
-                                    if(addShopResult.activity_dtls_list.size>0){
+                                    if(addShopResult.task_status_dtls_list.size>0){
                                         tv_no_data.visibility=View.GONE
-                                        setAdapter(addShopResult.activity_dtls_list!!)
+                                        setAdapter(addShopResult.task_status_dtls_list!!)
                                     }
                                 } else  {
                                     tv_no_data.visibility=View.VISIBLE
@@ -184,9 +174,9 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
         }
     }
 
-    private fun setAdapter(list: ArrayList<activity_dtls_list>){
+    private fun setAdapter(list: ArrayList<Taskdtls_list>){
         viewActivityAdapter=ViewTaskActivityAdapter(mContext,list,object: ViewTaskActivityAdapter.OnViewActiClickListener{
-            override fun onEditClick(obj: activity_dtls_list,adapterPos:Int) {
+            override fun onEditClick(obj: Taskdtls_list,adapterPos:Int) {
                 var isLast:Boolean=false
                 if((list.size-1) == adapterPos){
                     isLast=true
@@ -343,13 +333,13 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
                 val dialogYes = simpleDialogYesNo.findViewById(R.id.tv_dialog_yes_no_yes) as AppCustomTextView
                 val dialogNo = simpleDialogYesNo.findViewById(R.id.tv_dialog_yes_no_no) as AppCustomTextView
                 dialogYes.setOnClickListener({ view ->
-                    addActivityReq.activity_date=tv_date_dialog.text.toString()
-                    addActivityReq.activity_time=tv_time.text.toString()
-                    addActivityReq.activity_details=et_dtls.text.toString()
+                    addActivityReq.user_id = Pref.user_id
+                    addActivityReq.task_date=tv_date_dialog.text.toString()
+                    addActivityReq.task_time=tv_time.text.toString()
+                    addActivityReq.task_details=et_dtls.text.toString()
                     addActivityReq.other_remarks=et_remarks.text.toString()
-                    addActivityReq.activity_type_name=activityType.text.toString()
-                    addActivityReq.activity_status=activityStatus.text.toString()
-                    addActivityReq.activity_next_date=nextDate.text.toString()
+                    addActivityReq.task_status=activityStatus.text.toString()
+                    addActivityReq.task_next_date=nextDate.text.toString()
                     simpleDialogYesNo.cancel()
                     simpleDialog.cancel()
                     submitActivityAPI()
@@ -454,8 +444,9 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
     }
 
 
+    @SuppressLint("SuspiciousIndentation")
     private fun submitActivityAPI(){
-        addActivityReq.crm_id= crm_id
+        addActivityReq.task_id= task_id
 
         try {
             if (!AppUtils.isOnline(mContext)) {
@@ -463,23 +454,26 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
                 return
             }
 
-            var formatDate = AppUtils.getFormatedDateNew(addActivityReq.activity_date,"dd-mm-yyyy","yyyy-mm-dd")
-            addActivityReq.activity_date=formatDate
+            var formatDate = AppUtils.getFormatedDateNew(addActivityReq.task_date,"dd-mm-yyyy","yyyy-mm-dd")
+            addActivityReq.task_date=formatDate
 
-            if(!addActivityReq.activity_next_date.equals("")){
-                formatDate = AppUtils.getFormatedDateNew(addActivityReq.activity_next_date,"dd-mm-yyyy","yyyy-mm-dd")
-                addActivityReq.activity_next_date=formatDate
+            if(!addActivityReq.task_next_date.equals("")){
+                formatDate = AppUtils.getFormatedDateNew(addActivityReq.task_next_date,"dd-mm-yyyy","yyyy-mm-dd")
+                addActivityReq.task_next_date=formatDate
+            }else{
+                addActivityReq.task_next_date=AppUtils.getNextDateForShopActi()
             }
 
+
             if(Pref.IsAutoLeadActivityDateTime){
-                addActivityReq.activity_time=AppUtils.getCurrentTimes()
+                addActivityReq.task_time=AppUtils.getCurrentTimes()
             }
 
             BaseActivity.isApiInitiated = true
             progress_wheel.spin()
             val repository = GetLeadRegProvider.provideList()
             BaseActivity.compositeDisposable.add(
-                    repository.submitActivity(addActivityReq)
+                    repository.submitTask(addActivityReq)
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribeOn(Schedulers.io())
                             .subscribe({ result ->
@@ -488,23 +482,19 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
                                 progress_wheel.stopSpinning()
                                 if (addShopResult.status == NetworkConstant.SUCCESS) {
                                     doAsync {
-                                        var obj:LeadActivityEntity = LeadActivityEntity()
+                                      var obj:TaskManagmentEntity = TaskManagmentEntity()
                                         obj.apply {
-                                            crm_id = Companion.crm_id
-                                            customer_name = Companion.shopNames
-                                            mobile_no = Companion.shopPhone
-                                            activity_date = addActivityReq.activity_date
-                                            activity_time = addActivityReq.activity_time
-                                            activity_time = addActivityReq.activity_time
-                                            activity_type_name = addActivityReq.activity_type_name
-                                            activity_status = addActivityReq.activity_status
+                                            task_status_id = Companion.task_id
+                                            task_date = addActivityReq.task_date
+                                            task_time = addActivityReq.task_time
+                                            task_status = addActivityReq.task_status
                                             other_remarks = addActivityReq.other_remarks
-                                            activity_next_date = addActivityReq.activity_next_date
+                                            task_next_date = addActivityReq.task_next_date
                                         }
-                                        AppDatabase.getDBInstance()!!.leadActivityDao().insertAll(obj)
+                                        AppDatabase.getDBInstance()!!.taskManagementDao().insertAll(obj)
 
                                         uiThread {
-                                            showMsg("Activity submitted successfully.")
+                                            showMsg("Task submitted successfully.")
                                         }
                                     }
 
@@ -527,7 +517,7 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
         }
     }
 
-    private fun onEdit(obj: activity_dtls_list,isLast:Boolean){
+    private fun onEdit(obj: Taskdtls_list,isLast:Boolean){
         simpleDialog = Dialog(mContext)
         simpleDialog.setCancelable(false)
         simpleDialog.getWindow()!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
@@ -557,19 +547,18 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
 
 
         //data set
-        tv_date_dialog.text=obj.activity_date
+        tv_date_dialog.text=obj.task_date
         if(isLast){
             tv_date_dialog.isEnabled=true
         }else{
             tv_date_dialog.isEnabled=false
         }
-        tv_time.text=obj.activity_time
+        tv_time.text=obj.task_time
         //tv_time.isEnabled=false
-        et_dtls.setText(obj.activity_details)
+        et_dtls.setText(obj.task_details)
         et_remarks.setText(obj.other_remarks)
-        activityStatus.text=obj.activity_status
-        activityType.text=obj.activity_type_name
-        nextDate.text = obj.activity_next_date
+        activityStatus.text=obj.task_status
+        nextDate.text = obj.task_next_date
 
 
         // start 2.0  ViewTaskManagementFrag mantis 0026028
@@ -645,8 +634,6 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
 
             // start 1.0  ViewTaskManagementFrag mantis 26025
             if(validating){
-
-
                 val simpleDialogYesNo = Dialog(mContext)
                 simpleDialogYesNo.setCancelable(false)
                 simpleDialogYesNo.getWindow()!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
@@ -658,17 +645,15 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
                 val dialogYes = simpleDialogYesNo.findViewById(R.id.tv_dialog_yes_no_yes) as AppCustomTextView
                 val dialogNo = simpleDialogYesNo.findViewById(R.id.tv_dialog_yes_no_no) as AppCustomTextView
                 dialogYes.setOnClickListener({ view ->
-
-                    editActivityReq.activity_id=obj.activity_id
-                    editActivityReq.crm_id= crm_id
-                    editActivityReq.activity_date=tv_date_dialog.text.toString()
-                    editActivityReq.activity_time=tv_time.text.toString()
-                    editActivityReq.activity_details=et_dtls.text.toString()
+                    editActivityReq.user_id =  Pref.user_id
+                    editActivityReq.task_status_id=obj.task_status_id
+                    editActivityReq.task_id= task_id
+                    editActivityReq.task_date=tv_date_dialog.text.toString()
+                    editActivityReq.task_time=tv_time.text.toString()
+                    editActivityReq.task_details=et_dtls.text.toString()
                     editActivityReq.other_remarks=et_remarks.text.toString()
-
-                    editActivityReq.activity_type_name=activityType.text.toString()
-                    editActivityReq.activity_status=activityStatus.text.toString()
-                    editActivityReq.activity_next_date=nextDate.text.toString()
+                    editActivityReq.task_status=activityStatus.text.toString()
+                    editActivityReq.task_next_date=nextDate.text.toString()
 
                     simpleDialogYesNo.cancel()
                     simpleDialog.cancel()
@@ -700,17 +685,17 @@ class ViewTaskManagementFrag : BaseFragment(), View.OnClickListener{
                 return
             }
 
-            var formatDate = AppUtils.getFormatedDateNew(editActivityReq.activity_date,"dd-mm-yyyy","yyyy-mm-dd")
-            editActivityReq.activity_date=formatDate
+            var formatDate = AppUtils.getFormatedDateNew(editActivityReq.task_date,"dd-mm-yyyy","yyyy-mm-dd")
+            editActivityReq.task_date=formatDate
 
-            var formatNextDate = AppUtils.getFormatedDateNew(editActivityReq.activity_next_date,"dd-mm-yyyy","yyyy-mm-dd")
-            editActivityReq.activity_next_date=formatNextDate
+            var formatNextDate = AppUtils.getFormatedDateNew(editActivityReq.task_next_date,"dd-mm-yyyy","yyyy-mm-dd")
+            editActivityReq.task_next_date=formatNextDate
 
             BaseActivity.isApiInitiated = true
             progress_wheel.spin()
             val repository = GetLeadRegProvider.provideList()
             BaseActivity.compositeDisposable.add(
-                    repository.editActivity(editActivityReq)
+                    repository.editTask(editActivityReq)
                             .observeOn(AndroidSchedulers.mainThread())
                             .subscribeOn(Schedulers.io())
                             .subscribe({ result ->
